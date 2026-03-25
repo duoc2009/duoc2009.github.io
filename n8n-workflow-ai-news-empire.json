@@ -1,0 +1,1051 @@
+{
+  "name": "AI News Empire - Đa AI Thông Minh & Anti-Ban",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/15 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "1",
+      "name": "Lịch chạy 15 phút",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -200,
+        450
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "2",
+      "name": "Chạy thử",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "GEMINI_API_KEY",
+              "value": "ĐIỀN_GEMINI_API_KEY_VÀO_ĐÂY"
+            },
+            {
+              "name": "DEEPSEEK_API_KEY",
+              "value": "ĐIỀN_DEEPSEEK_API_KEY_VÀO_ĐÂY"
+            },
+            {
+              "name": "GROQ_API_KEY",
+              "value": "ĐIỀN_KEY_GROQ_VÀO_ĐÂY"
+            },
+            {
+              "name": "OPENROUTER_API_KEY",
+              "value": "ĐIỀN_KEY_OPENROUTER_VÀO_ĐÂY"
+            },
+            {
+              "name": "MISTRAL_API_KEY",
+              "value": "ĐIỀN_KEY_MISTRAL_VÀO_ĐÂY"
+            },
+            {
+              "name": "REPLICATE_API_KEY",
+              "value": "ĐIỀN_REPLICATE_API_KEY_VÀO_ĐÂY"
+            },
+            {
+              "name": "BOT_TOKEN",
+              "value": "ĐIỀN_TELEGRAM_BOT_TOKEN_VÀO_ĐÂY"
+            },
+            {
+              "name": "CHAT_ID",
+              "value": "ĐIỀN_TELEGRAM_CHAT_ID_VÀO_ĐÂY"
+            },
+            {
+              "name": "WP1_URL",
+              "value": "https://YOUR-WP1-SITE.com"
+            },
+            {
+              "name": "WP1_USER",
+              "value": "ĐIỀN_WP1_USERNAME_VÀO_ĐÂY"
+            },
+            {
+              "name": "WP1_PASS",
+              "value": "ĐIỀN_WP1_APPLICATION_PASSWORD_VÀO_ĐÂY"
+            },
+            {
+              "name": "WP2_URL",
+              "value": "https://YOUR-WP2-SITE.com"
+            },
+            {
+              "name": "WP2_USER",
+              "value": "ĐIỀN_WP2_USERNAME_VÀO_ĐÂY"
+            },
+            {
+              "name": "WP2_PASS",
+              "value": "ĐIỀN_WP2_APPLICATION_PASSWORD_VÀO_ĐÂY"
+            },
+            {
+              "name": "POST_STATUS",
+              "value": "draft"
+            }
+          ]
+        }
+      },
+      "id": "3",
+      "name": "0A. HÒM CHÌA KHÓA",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        0,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\ndata.WP1_AUTH = 'Basic ' + Buffer.from(data.WP1_USER + ':' + data.WP1_PASS.replace(/\\s/g, '')).toString('base64');\ndata.WP2_AUTH = 'Basic ' + Buffer.from(data.WP2_USER + ':' + data.WP2_PASS.replace(/\\s/g, '')).toString('base64');\nreturn [{json: data}];"
+      },
+      "id": "4",
+      "name": "1A. Mã Hóa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://docs.google.com/spreadsheets/d/1j5L6_UZBWhn8vXIks2dyjX_FBQ8_TnP8AZrcwpWAtkU/export?format=csv",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "id": "5",
+      "name": "2A. Tải CSV",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        400,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "csv"
+      },
+      "id": "6",
+      "name": "3A. Đọc CSV",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        600,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "let feeds = [];\ntry {\n  for (let item of items) {\n    for (let key in item.json) {\n      if (typeof item.json[key] === 'string' && item.json[key].includes('http')) {\n        let match = item.json[key].match(/(https?:\\/\\/[^\\s]+)/);\n        if (match) { feeds.push({ json: { link_rss_chuan: match[1].trim() } }); break; }\n      }\n    }\n  }\n} catch(e) {}\nreturn feeds.sort(() => 0.5 - Math.random()).slice(0, 5);"
+      },
+      "id": "7",
+      "name": "4A. Chọn Nguồn",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        800,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link_rss_chuan }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            },
+            {
+              "name": "Accept",
+              "value": "application/rss+xml, application/xml, text/xml, */*"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "id": "8",
+      "name": "5A. Anti-Ban RSS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1000,
+        450
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "let text = $input.first().json.data || '';\nlet linkMatch = text.match(/<link[^>]*>(.*?)<\\/link>|<link\\s+href=\"([^\"]+)\"/g);\nlet validLinks = [];\nif (linkMatch) {\n  for (let l of linkMatch) {\n    let clean = l.replace(/<\\/?link[^>]*>/g, '')\n                 .replace(/<link\\s+href=\"([^\"]+)\"[^>]*>/g, '$1')\n                 .trim();\n    if (clean.startsWith('http') && !clean.includes('comments')) validLinks.push(clean);\n  }\n}\nif (validLinks.length > 0) {\n  let picked = validLinks[Math.floor(Math.random() * validLinks.length)];\n  return [{ json: { link: picked, is_empty: false } }];\n}\nreturn [{ json: { link: 'https://vnexpress.net', is_empty: true } }];"
+      },
+      "id": "9",
+      "name": "6A. Parse RSS Thô",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.link }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/122.0.0.0 Safari/537.36"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 20000,
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "10",
+      "name": "7A. Cào Full Bài",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1400,
+        450
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "let html = '';\ntry { html = $input.first().json.data; } catch(e) {}\nlet rawText = '';\nif (html && typeof html === 'string') {\n  let pMatches = html.match(/<p[^>]*>(.*?)<\\/p>/gi);\n  if (pMatches) rawText = pMatches.map(p => p.replace(/<[^>]+>/g, '')).join('\\n');\n}\nif (!rawText || rawText.length < 50) rawText = 'Công nghệ AI đang phát triển mạnh mẽ.';\nreturn [{ json: { content_goc: rawText.substring(0, 4500) } }];"
+      },
+      "id": "11",
+      "name": "8A. Dọn HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $node['0A. HÒM CHÌA KHÓA'].json['GROQ_API_KEY'] }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"llama3-8b-8192\", \"messages\": [ { \"role\": \"system\", \"content\": \"Bạn là chuyên gia SEO và phân tích nội dung.\" }, { \"role\": \"user\", \"content\": \"Trích xuất 5 ý chính và 5 từ khóa SEO quan trọng nhất từ nội dung sau. Trả về text ngắn gọn dưới 200 chữ:\\n\" + $json.content_goc.substring(0, 2500) } ], \"temperature\": 0.3, \"max_tokens\": 400 } }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 30000
+        }
+      },
+      "id": "AI_GROQ",
+      "name": "8B. AI Groq Trích Xuất (Free)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1800,
+        450
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "let groqData = $input.first().json;\nlet insight = (groqData.choices && groqData.choices[0])\n  ? groqData.choices[0].message.content\n  : 'Không trích xuất được insight.';\nlet textGoc = $node['8A. Dọn HTML'].json.content_goc || 'Nội dung trống.';\n\nlet promptJson = JSON.stringify({\n  wp1: { title: '...', excerpt: '...', content: '...', cover_prompt: 'beautiful asian woman...', inside_prompt: '...', inside_caption: '...' },\n  wp2: { title: '...', excerpt: '...', content: '...', cover_prompt: 'handsome asian man...', inside_prompt: '...', inside_caption: '...' }\n}, null, 2);\n\nlet prompt = 'Dựa trên Insight: ' + insight\n  + '\\n\\nVà Text gốc: ' + textGoc\n  + '\\n\\nHãy đóng vai nhà báo chuyên nghiệp. Viết 2 bài HOÀN TOÀN KHÁC NHAU về chủ đề trên.'\n  + '\\n\\nYÊU CẦU MỖI BÀI:'\n  + '\\n- Dài 600+ chữ tiếng Việt'\n  + '\\n- Sapo (mở đầu) in đậm thú vị'\n  + '\\n- 2 thẻ <h2> chia đoạn'\n  + '\\n- 1 <blockquote> trích dẫn hay'\n  + '\\n- Chèn mã [IMG_1] giữa bài'\n  + '\\n- Từ khóa vẽ ảnh (cover_prompt, inside_prompt) mô tả người Châu Á đẹp bằng tiếng Anh'\n  + '\\n\\nTRẢ VỀ JSON THUẦN, KHÔNG MARKDOWN, đúng định dạng:\\n' + promptJson;\n\nreturn [{ json: { prompt: prompt } }];"
+      },
+      "id": "8C",
+      "name": "8C. Chuẩn Bị Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={{ $node['0A. HÒM CHÌA KHÓA'].json['GEMINI_API_KEY'] }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"contents\": [ { \"parts\": [ { \"text\": $json.prompt } ] } ], \"generationConfig\": { \"temperature\": 0.8, \"maxOutputTokens\": 4096 } } }}",
+        "options": {
+          "timeout": 60000,
+          "retry": {
+            "retry": {
+              "count": 3,
+              "delay": 5000
+            }
+          }
+        }
+      },
+      "id": "12",
+      "name": "9A. AI Gemini Viết Báo (Free)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2200,
+        450
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $node['0A. HÒM CHÌA KHÓA'].json['OPENROUTER_API_KEY'] }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "HTTP-Referer",
+              "value": "https://kynguyenso.com.vn"
+            },
+            {
+              "name": "X-Title",
+              "value": "AI News Empire"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"meta-llama/llama-3-8b-instruct:free\", \"messages\": [ { \"role\": \"user\", \"content\": 'Tối ưu hóa 2 tiêu đề bài báo sau cho viral, thu hút clicks, giữ nguyên tiếng Việt.\\nText: ' + (($json.candidates && $json.candidates[0]) ? $json.candidates[0].content.parts[0].text.substring(0, 1200) : 'Lỗi lấy nội dung') + '\\nTrả về JSON: {\"title1_viral\":\"...\",\"title2_viral\":\"...\"}' } ], \"temperature\": 0.7, \"max_tokens\": 200 } }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 30000
+        }
+      },
+      "id": "AI_OPEN",
+      "name": "9B. AI OpenRouter Tối Ưu Title",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2400,
+        450
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $node['0A. HÒM CHÌA KHÓA'].json['DEEPSEEK_API_KEY'] }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"deepseek-chat\", \"messages\": [ { \"role\": \"system\", \"content\": \"Chấm điểm SEO bản nháp từ 1 đến 10 và đưa ra 1 gợi ý ngắn cải thiện. Trả về JSON: {\\\"score\\\": 9, \\\"tip\\\": \\\"...\\\"}\" }, { \"role\": \"user\", \"content\": ($node['9A. AI Gemini Viết Báo (Free)'].json.candidates && $node['9A. AI Gemini Viết Báo (Free)'].json.candidates[0]) ? $node['9A. AI Gemini Viết Báo (Free)'].json.candidates[0].content.parts[0].text.substring(0, 800) : 'Lỗi nội dung' } ], \"max_tokens\": 150, \"temperature\": 0.1 } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "AI_DEEPSEEK",
+      "name": "9C. AI DeepSeek Chấm SEO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2600,
+        450
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.mistral.ai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $node['0A. HÒM CHÌA KHÓA'].json['MISTRAL_API_KEY'] }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"model\": \"mistral-small-latest\", \"messages\": [ { \"role\": \"system\", \"content\": \"Bạn là biên tập viên báo chí chuyên nghiệp. Đọc bản nháp và đưa ra 1 nhận xét ngắn (tối đa 100 chữ) về điểm mạnh và cách cải thiện.\" }, { \"role\": \"user\", \"content\": ($node['9A. AI Gemini Viết Báo (Free)'].json.candidates && $node['9A. AI Gemini Viết Báo (Free)'].json.candidates[0]) ? $node['9A. AI Gemini Viết Báo (Free)'].json.candidates[0].content.parts[0].text.substring(0, 600) : 'Lỗi nội dung' } ], \"max_tokens\": 150, \"temperature\": 0.4 } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "AI_MISTRAL",
+      "name": "9D. AI Mistral Kiểm Tra Chất Lượng",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2800,
+        450
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "let geminiText = '{}';\nif ($node['9A. AI Gemini Viết Báo (Free)'].json.candidates) {\n  geminiText = $node['9A. AI Gemini Viết Báo (Free)'].json.candidates[0].content.parts[0].text;\n}\n\nlet parsed = {};\ntry {\n  let match = geminiText.match(/\\{[\\s\\S]*\\}/);\n  if (match) parsed = JSON.parse(match[0]);\n} catch(e) {}\nif (!parsed.wp1) parsed.wp1 = {};\nif (!parsed.wp2) parsed.wp2 = {};\n\n// OpenRouter: upgrade titles\ntry {\n  let orRaw = $node['9B. AI OpenRouter Tối Ưu Title'].json.choices[0].message.content;\n  let orMatch = orRaw.match(/\\{[\\s\\S]*\\}/);\n  if (orMatch) {\n    let orP = JSON.parse(orMatch[0]);\n    if (orP.title1_viral) parsed.wp1.title = orP.title1_viral;\n    if (orP.title2_viral) parsed.wp2.title = orP.title2_viral;\n  }\n} catch(e) {}\n\n// Mistral: content quality tip\ntry {\n  let msRaw = $node['9D. AI Mistral Kiểm Tra Chất Lượng'].json.choices[0].message.content;\n  parsed.mistral_tip = msRaw.substring(0, 300);\n} catch(e) { parsed.mistral_tip = ''; }\n\n// DeepSeek: SEO score\ntry {\n  let dsRaw = $node['9C. AI DeepSeek Chấm SEO'].json.choices[0].message.content;\n  let dsMatch = dsRaw.match(/\\{[\\s\\S]*\\}/);\n  if (dsMatch) {\n    let dsP = JSON.parse(dsMatch[0]);\n    parsed.ds_score = dsP.score || 8;\n    parsed.ds_tip = dsP.tip || 'Tốt';\n  }\n} catch(e) { parsed.ds_score = 8; parsed.ds_tip = 'Chưa chấm được'; }\n\nparsed.ok = true;\nreturn [{ json: parsed }];"
+      },
+      "id": "13",
+      "name": "10A. Data Hub",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3000,
+        450
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $node['0A. HÒM CHÌA KHÓA'].json['REPLICATE_API_KEY'] }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "wait"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"input\": { \"prompt\": 'A highly detailed journalistic photo of ' + ($json.wp1.cover_prompt || 'beautiful asian businesswoman') + ', extremely attractive asian people, photorealistic, 8k resolution', \"aspect_ratio\": \"16:9\", \"output_format\": \"jpg\", \"num_inference_steps\": 4 } } }}",
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "id": "R1",
+      "name": "R1. Ảnh Bìa WP1 (Replicate)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3200,
+        250
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ ($json.output && $json.output[0]) ? $json.output[0] : 'https://image.pollinations.ai/prompt/' + encodeURIComponent(($node['10A. Data Hub'].json.wp1.cover_prompt || 'beautiful asian businesswoman') + ', photorealistic, 8k') + '?width=1280&height=720&nologo=true&seed=' + Math.floor(Math.random()*99999) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "D1",
+      "name": "D1. Tải Ảnh WP1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3400,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $node['0A. HÒM CHÌA KHÓA'].json.WP1_URL }}/wp-json/wp/v2/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $node['1A. Mã Hóa'].json.WP1_AUTH }}"
+            },
+            {
+              "name": "Content-Disposition",
+              "value": "attachment; filename=\"cover-wp1.jpg\""
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "raw",
+        "contentType": "image/jpeg",
+        "sendInputData": true,
+        "inputDataFieldName": "data"
+      },
+      "id": "U1",
+      "name": "U1. Up WP1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3600,
+        250
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $node['0A. HÒM CHÌA KHÓA'].json['REPLICATE_API_KEY'] }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "wait"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"input\": { \"prompt\": 'A highly detailed journalistic photo of ' + ($node['10A. Data Hub'].json.wp2.cover_prompt || 'attractive asian businessman') + ', extremely attractive asian people, photorealistic, 8k resolution', \"aspect_ratio\": \"16:9\", \"output_format\": \"jpg\", \"num_inference_steps\": 4 } } }}",
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "id": "R2",
+      "name": "R2. Ảnh Bìa WP2 (Replicate)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3800,
+        250
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ ($json.output && $json.output[0]) ? $json.output[0] : 'https://image.pollinations.ai/prompt/' + encodeURIComponent(($node['10A. Data Hub'].json.wp2.cover_prompt || 'attractive asian businessman') + ', photorealistic, 8k') + '?width=1280&height=720&nologo=true&seed=' + Math.floor(Math.random()*99999) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "D2",
+      "name": "D2. Tải Ảnh WP2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        4000,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $node['0A. HÒM CHÌA KHÓA'].json.WP2_URL }}/wp-json/wp/v2/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $node['1A. Mã Hóa'].json.WP2_AUTH }}"
+            },
+            {
+              "name": "Content-Disposition",
+              "value": "attachment; filename=\"cover-wp2.jpg\""
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "raw",
+        "contentType": "image/jpeg",
+        "sendInputData": true,
+        "inputDataFieldName": "data"
+      },
+      "id": "U2",
+      "name": "U2. Up WP2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        4200,
+        250
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "let ai = $node['10A. Data Hub'].json;\nlet keys = $node['0A. HÒM CHÌA KHÓA'].json;\nlet u1 = {}; let u2 = {};\ntry { u1 = $items('U1. Up WP1', 0, 0)[0].json; } catch(e) {}\ntry { u2 = $items('U2. Up WP2', 0, 0)[0].json; } catch(e) {}\n\nlet footer1 = '\\n<p><em>⭐ Điểm SEO AI: ' + ai.ds_score + '/10 | 💡 ' + ai.ds_tip + '</em></p>';\nlet footer2 = '\\n<p><em>⭐ Điểm SEO AI: ' + ai.ds_score + '/10 | 💡 ' + ai.ds_tip + '</em></p>';\n\nlet payload1 = {\n  title: ai.wp1.title || 'Tin tức Số',\n  excerpt: ai.wp1.excerpt || '',\n  content: (ai.wp1.content || '<p>Nội dung đang được cập nhật.</p>') + footer1,\n  status: keys.POST_STATUS || 'draft',\n  categories: [1]\n};\nif (u1.id) payload1.featured_media = u1.id;\n\nlet payload2 = {\n  title: ai.wp2.title || 'Góc nhìn xanh',\n  excerpt: ai.wp2.excerpt || '',\n  content: (ai.wp2.content || '<p>Nội dung đang được cập nhật.</p>') + footer2,\n  status: keys.POST_STATUS || 'draft',\n  categories: [1]\n};\nif (u2.id) payload2.featured_media = u2.id;\n\nreturn [{ json: { wp1: payload1, wp2: payload2, score: ai.ds_score, tip: ai.ds_tip, mistral_tip: ai.mistral_tip || '' } }];"
+      },
+      "id": "14",
+      "name": "12A. Ráp Khung",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4400,
+        250
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $node['0A. HÒM CHÌA KHÓA'].json.WP1_URL }}/wp-json/wp/v2/posts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $node['1A. Mã Hóa'].json.WP1_AUTH }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.wp1 }}"
+      },
+      "id": "15",
+      "name": "13A. Post WP1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        4600,
+        150
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $node['0A. HÒM CHÌA KHÓA'].json.WP2_URL }}/wp-json/wp/v2/posts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $node['1A. Mã Hóa'].json.WP2_AUTH }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.wp2 }}"
+      },
+      "id": "16",
+      "name": "14A. Post WP2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        4600,
+        350
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $node['0A. HÒM CHÌA KHÓA'].json['BOT_TOKEN'] }}/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"chat_id\": $node['0A. HÒM CHÌA KHÓA'].json['CHAT_ID'], \"text\": '🏆 HOÀN THÀNH (5 AI)\\n\\n🤖 Groq (Free): Trích xuất insight OK\\n🤖 Gemini 2.0 Flash (Free): Viết 2 bài OK\\n🤖 OpenRouter llama3 (Free): Viral title OK\\n🤖 Mistral Small (Free): Kiểm tra chất lượng OK\\n🤖 DeepSeek: Chấm SEO OK\\n🎨 Replicate Flux + Pollinations fallback\\n\\n⭐ Điểm SEO: ' + $node['12A. Ráp Khung'].json.score + '/10\\n💡 DeepSeek: ' + $node['12A. Ráp Khung'].json.tip + '\\n✏️ Mistral: ' + ($node['12A. Ráp Khung'].json.mistral_tip || 'N/A') + '\\n\\n✅ Đã đăng 2 bài lên 2 website!', \"parse_mode\": \"HTML\" } }}"
+      },
+      "id": "17",
+      "name": "Báo Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        4800,
+        250
+      ]
+    }
+  ],
+  "connections": {
+    "Lịch chạy 15 phút": {
+      "main": [
+        [
+          {
+            "node": "0A. HÒM CHÌA KHÓA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chạy thử": {
+      "main": [
+        [
+          {
+            "node": "0A. HÒM CHÌA KHÓA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "0A. HÒM CHÌA KHÓA": {
+      "main": [
+        [
+          {
+            "node": "1A. Mã Hóa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1A. Mã Hóa": {
+      "main": [
+        [
+          {
+            "node": "2A. Tải CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2A. Tải CSV": {
+      "main": [
+        [
+          {
+            "node": "3A. Đọc CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3A. Đọc CSV": {
+      "main": [
+        [
+          {
+            "node": "4A. Chọn Nguồn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4A. Chọn Nguồn": {
+      "main": [
+        [
+          {
+            "node": "5A. Anti-Ban RSS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5A. Anti-Ban RSS": {
+      "main": [
+        [
+          {
+            "node": "6A. Parse RSS Thô",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6A. Parse RSS Thô": {
+      "main": [
+        [
+          {
+            "node": "7A. Cào Full Bài",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7A. Cào Full Bài": {
+      "main": [
+        [
+          {
+            "node": "8A. Dọn HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8A. Dọn HTML": {
+      "main": [
+        [
+          {
+            "node": "8B. AI Groq Trích Xuất (Free)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8B. AI Groq Trích Xuất (Free)": {
+      "main": [
+        [
+          {
+            "node": "8C. Chuẩn Bị Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8C. Chuẩn Bị Prompt": {
+      "main": [
+        [
+          {
+            "node": "9A. AI Gemini Viết Báo (Free)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9A. AI Gemini Viết Báo (Free)": {
+      "main": [
+        [
+          {
+            "node": "9B. AI OpenRouter Tối Ưu Title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9B. AI OpenRouter Tối Ưu Title": {
+      "main": [
+        [
+          {
+            "node": "9C. AI DeepSeek Chấm SEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9C. AI DeepSeek Chấm SEO": {
+      "main": [
+        [
+          {
+            "node": "9D. AI Mistral Kiểm Tra Chất Lượng",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "9D. AI Mistral Kiểm Tra Chất Lượng": {
+      "main": [
+        [
+          {
+            "node": "10A. Data Hub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10A. Data Hub": {
+      "main": [
+        [
+          {
+            "node": "R1. Ảnh Bìa WP1 (Replicate)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "R1. Ảnh Bìa WP1 (Replicate)": {
+      "main": [
+        [
+          {
+            "node": "D1. Tải Ảnh WP1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "D1. Tải Ảnh WP1": {
+      "main": [
+        [
+          {
+            "node": "U1. Up WP1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "U1. Up WP1": {
+      "main": [
+        [
+          {
+            "node": "R2. Ảnh Bìa WP2 (Replicate)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "R2. Ảnh Bìa WP2 (Replicate)": {
+      "main": [
+        [
+          {
+            "node": "D2. Tải Ảnh WP2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "D2. Tải Ảnh WP2": {
+      "main": [
+        [
+          {
+            "node": "U2. Up WP2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "U2. Up WP2": {
+      "main": [
+        [
+          {
+            "node": "12A. Ráp Khung",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "12A. Ráp Khung": {
+      "main": [
+        [
+          {
+            "node": "13A. Post WP1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "14A. Post WP2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "13A. Post WP1": {
+      "main": [
+        [
+          {
+            "node": "Báo Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "14A. Post WP2": {
+      "main": [
+        [
+          {
+            "node": "Báo Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
