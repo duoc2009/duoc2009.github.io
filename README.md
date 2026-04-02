@@ -5,7 +5,7 @@ Chào mừng bạn đến với không gian sáng tạo của tôi - nơi hội 
 ---
 
 ## 🤖 Chân dung Nhà báo Công nghệ
-![BA HUY AI Journalist](images/bahuy-ai.jpg)
+![BA HUY AI Journalist](bahuy-ai.jpg)
 
 ---
 
